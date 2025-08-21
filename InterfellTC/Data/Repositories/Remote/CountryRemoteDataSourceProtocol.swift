@@ -7,4 +7,5 @@
 
 protocol CountryRemoteDataSourceProtocol {
     func fetchCountries(params: FetchCountriesParams) async throws -> [CountryResponse]
+    func searchCountry(by text: String) async throws -> [CountryResponse]
 }

@@ -7,4 +7,5 @@
 
 protocol CountryRepositoryProtocol {
     func fetchCountries(params: FetchCountriesParams) async throws -> [Country]
+    func searchCountry(by text: String) async throws -> [Country]
 }

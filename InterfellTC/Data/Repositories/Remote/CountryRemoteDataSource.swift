@@ -17,4 +17,10 @@ class CountryRemoteDataSource: CountryRemoteDataSourceProtocol {
         let response: FetchCountryResponse? = try await serviceManager.request(request, type: FetchCountryResponse.self)
         return response ?? []
     }
+    
+    func searchCountry(by text: String) async throws -> [CountryResponse] {
+        let request = CountriesApi.byName(name: text, fullText: false)
+        let response: FetchCountryResponse? = try await serviceManager.request(request, type: FetchCountryResponse.self)
+        return response ?? []
+    }
 }

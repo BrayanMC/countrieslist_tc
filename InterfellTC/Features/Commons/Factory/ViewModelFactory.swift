@@ -26,9 +26,11 @@ class ViewModelFactory: ViewModelFactoryProtocol {
         let countryRemoteDataSource: CountryRemoteDataSourceProtocol = CountryRemoteDataSource()
         let repository: CountryRepositoryProtocol = CountryRepository(remoteDataSource: countryRemoteDataSource)
         let fetchAllCountriesUseCase = FetchAllCountriesUseCase(repository: repository)
+        let searchCountryByTextUseCase = SearchCountryByTextUseCase(repository: repository)
         return CountriesViewModel(
             coordinator: coordinator,
-            fetchAllCountriesUseCase: fetchAllCountriesUseCase
+            fetchAllCountriesUseCase: fetchAllCountriesUseCase,
+            searchCountryByTextUseCase: searchCountryByTextUseCase
         )
     }
     

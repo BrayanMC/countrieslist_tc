@@ -12,6 +12,7 @@ class CountriesViewModel: ObservableObject {
     private let coordinator: Coordinator
     private let factory: ViewModelFactory
     private let fetchAllCountriesUseCase: FetchAllCountriesUseCase
+    private let searchCountryByTextUseCase: SearchCountryByTextUseCase
     private var cancellables = Set<AnyCancellable>()
     
     @Published var searchText = ""
@@ -28,11 +29,13 @@ class CountriesViewModel: ObservableObject {
     
     init(
         coordinator: Coordinator,
-        fetchAllCountriesUseCase: FetchAllCountriesUseCase
+        fetchAllCountriesUseCase: FetchAllCountriesUseCase,
+        searchCountryByTextUseCase: SearchCountryByTextUseCase
     ) {
         self.coordinator = coordinator
         self.factory = ViewModelFactory(coordinator: coordinator)
         self.fetchAllCountriesUseCase = fetchAllCountriesUseCase
+        self.searchCountryByTextUseCase = searchCountryByTextUseCase
     }
     
     func onStart() {
@@ -60,27 +63,35 @@ class CountriesViewModel: ObservableObject {
     
     private func setupSearchFiltering() {
         $searchText
-            .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
+            .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
             .removeDuplicates()
             .sink { [weak self] searchText in
-                self?.filterCountries(with: searchText)
-            }
-            .store(in: &cancellables)
-        
-        $countries
-            .sink { [weak self] countries in
-                self?.filterCountries(with: self?.searchText ?? "")
+                self?.handleSearch(with: searchText)
             }
             .store(in: &cancellables)
     }
     
-    private func filterCountries(with searchText: String) {
+    private func handleSearch(with searchText: String) {
         if searchText.count < 2 {
-            filteredCountries = countries
+            loadCountries()
         } else {
-            filteredCountries = countries.filter {
-                ($0.name?.common?.localizedCaseInsensitiveContains(searchText) ?? false) ||
-                ($0.name?.official?.localizedCaseInsensitiveContains(searchText) ?? false)
+            searchCountries(with: searchText)
+        }
+    }
+    
+    private func searchCountries(with searchText: String) {
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            
+            isLoading = true
+            defer { isLoading = false }
+            
+            do {
+                let loadedCountries = try await searchCountryByTextUseCase.execute(searchText)
+                self.countries = loadedCountries
+            } catch let error {
+                print("Error loading countries: \(error)")
+                self.countries = []
             }
         }
     }
